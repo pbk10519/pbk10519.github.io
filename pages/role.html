@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>우리 반 1인 1역 랜덤 뽑기</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../styles/style.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Gamja+Flower&display=swap');
+
+        /* Page specific */
+
+
+        .notebook-paper {
+            background-color: #fff;
+            background-image: linear-gradient(#e1e1e1 1px, transparent 1px);
+            background-size: 100% 1.5em;
+            line-height: 1.5em;
+            box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+
+        .chalkboard {
+            background-color: #2d3436;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' viewBox='0 0 4 4'%3E%3Cpath fill='%239C92AC' fill-opacity='0.1' d='M1 3h1v1H1V3zm2-2h1v1H3V1z'%3E%3C/path%3E%3C/svg%3E");
+            color: #fff;
+            font-family: 'Gamja Flower', cursive;
+            border: 8px solid #bcaaa4;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .hand-written-input {
+            font-family: 'Gamja Flower', cursive;
+            border: none;
+            border-bottom: 2px dashed #a0aec0;
+            background: transparent;
+            text-align: center;
+            font-size: 1.25rem;
+            transition: all 0.2s;
+        }
+
+        .hand-written-input:focus {
+            outline: none;
+            border-bottom: 2px solid #4fd1c5;
+            transform: scale(1.05);
+        }
+
+        .btn-primary {
+            background-color: #ff6b6b;
+            color: white;
+            border-radius: 1rem;
+            box-shadow: 0 4px 0 #c0392b;
+            transition: all 0.1s;
+        }
+
+        .btn-primary:active {
+            transform: translateY(4px);
+            box-shadow: 0 0 0 #c0392b;
+        }
+
+        .btn-secondary {
+            background-color: #48dbfb;
+            color: white;
+            border-radius: 1rem;
+            box-shadow: 0 4px 0 #0abde3;
+            transition: all 0.1s;
+        }
+
+        .btn-secondary:active {
+            transform: translateY(4px);
+            box-shadow: 0 0 0 #0abde3;
+        }
+
+        /* 애니메이션 */
+        @keyframes shake {
+            0% {
+                transform: translate(1px, 1px) rotate(0deg);
+            }
+
+            10% {
+                transform: translate(-1px, -2px) rotate(-1deg);
+            }
+
+            20% {
+                transform: translate(-3px, 0px) rotate(1deg);
+            }
+
+            30% {
+                transform: translate(3px, 2px) rotate(0deg);
+            }
+
+            40% {
+                transform: translate(1px, -1px) rotate(1deg);
+            }
+
+            50% {
+                transform: translate(-1px, 2px) rotate(-1deg);
+            }
+
+            60% {
+                transform: translate(-3px, 1px) rotate(0deg);
+            }
+
+            70% {
+                transform: translate(3px, 1px) rotate(-1deg);
+            }
+
+            80% {
+                transform: translate(-1px, -1px) rotate(1deg);
+            }
+
+            90% {
+                transform: translate(1px, 2px) rotate(0deg);
+            }
+
+            100% {
+                transform: translate(1px, -2px) rotate(-1deg);
+            }
+        }
+
+        .shake-element {
+            animation: shake 0.5s;
+            animation-iteration-count: infinite;
+        }
+
+        .pop-in {
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            opacity: 0;
+            transform: scale(0.5);
+        }
+
+        @keyframes popIn {
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+    </style>
+</head>
+
+<body class="flex flex-col items-center">
+
+    <!-- 내비게이션 메뉴 -->
+    <nav class="nav-container">
+        <ul class="nav-menu">
+            <li class="nav-item"><a href="../index.html" class="nav-link">🏠 홈</a></li>
+            <li class="nav-item"><a href="seatingarrangement.html" class="nav-link">자리배치</a></li>
+            <li class="nav-item"><a href="role.html" class="nav-link active">1인 1역</a></li>
+            <li class="nav-item"><a href="candy.html" class="nav-link">상품 뽑기</a></li>
+            <li class="nav-item"><a href="99.html" class="nav-link">구구단</a></li>
+            <li class="nav-item"><a href="alphabet.html" class="nav-link">알파벳</a></li>
+            <li class="nav-item"><a href="spelling.html" class="nav-link">맞춤법</a></li>
+        </ul>
+    </nav>
+
+    <div class="page-container">
+
+        <!-- 헤더 -->
+        <header class="mb-10 text-center">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-2 drop-shadow-md whitespace-nowrap">🏫 1인 1역 랜덤
+                뽑기</h1>
+            <p class="text-gray-500 text-lg whitespace-nowrap">우리 반 역할을 공정하고 재미있게 정해보세요!</p>
+        </header>
+
+        <!-- 메인 컨텐츠 -->
+        <main class="w-full max-w-4xl">
+
+            <!-- STEP 1: 인원 설정 -->
+            <section id="step-1" class="notebook-paper p-8 rounded-xl mb-8 transform rotate-1 mx-auto max-w-md">
+                <h2 class="text-2xl font-bold text-gray-700 mb-6 text-center border-b-2 border-gray-200 pb-2">Step 1. 학생
+                    수 입력</h2>
+                <div class="flex flex-col items-center gap-6">
+                    <div class="flex items-center gap-4">
+                        <button onclick="adjustCount(-1)"
+                            class="w-10 h-10 rounded-full bg-gray-200 text-gray-600 font-bold hover:bg-gray-300">-</button>
+                        <div class="relative">
+                            <input type="number" id="student-count" value="5" min="2" max="50"
+                                class="text-4xl w-24 text-center font-bold bg-transparent border-b-4 border-gray-400 focus:outline-none focus:border-blue-500">
+                            <span class="text-xl text-gray-500 ml-2">명</span>
+                        </div>
+                        <button onclick="adjustCount(1)"
+                            class="w-10 h-10 rounded-full bg-gray-200 text-gray-600 font-bold hover:bg-gray-300">+</button>
+                    </div>
+                    <button onclick="goToStep2()" class="btn-primary w-full py-3 text-xl font-bold">다음: 역할 정하기</button>
+                </div>
+            </section>
+
+            <!-- STEP 2: 이름 및 역할 입력 -->
+            <section id="step-2" class="hidden flex flex-col gap-6">
+                <div
+                    class="flex flex-col md:flex-row justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+                    <div class="mb-2 md:mb-0">
+                        <h2 class="text-xl font-bold text-gray-700">Step 2. 이름과 역할 확인</h2>
+                        <p class="text-sm text-gray-500">자동으로 채워진 내용을 수정할 수 있어요.</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="regenerateDefaults()"
+                            class="bg-yellow-400 text-white px-4 py-2 rounded-lg font-bold shadow-sm hover:bg-yellow-500 transition">🔄
+                            내용 다시 섞기</button>
+                        <button onclick="startDraw()" class="btn-primary px-8 py-2 text-lg font-bold">뽑기 시작! 🎲</button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- 이름 목록 -->
+                    <div class="notebook-paper p-6 rounded-xl transform -rotate-1">
+                        <h3 class="text-xl font-bold text-indigo-600 text-center mb-4">👶 학생 이름</h3>
+                        <div id="name-list" class="space-y-2 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+                            <!-- JS로 생성됨 -->
+                        </div>
+                    </div>
+
+                    <!-- 역할 목록 -->
+                    <div class="notebook-paper p-6 rounded-xl transform rotate-1">
+                        <h3 class="text-xl font-bold text-green-600 text-center mb-4">🧹 학급 역할</h3>
+                        <div id="role-list" class="space-y-2 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+                            <!-- JS로 생성됨 -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- STEP 3: 결과 화면 (칠판) -->
+            <section id="step-3" class="hidden">
+                <div class="chalkboard p-6 md:p-10 rounded-xl relative min-h-[500px]">
+
+                    <!-- 상단 버튼 -->
+                    <div class="absolute top-4 right-4 flex gap-2">
+                        <button onclick="resetAll()"
+                            class="bg-gray-600 hover:bg-gray-700 text-white px-3 py-1 rounded text-sm">처음으로</button>
+                        <button onclick="reDraw()"
+                            class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm shadow">다시
+                            뽑기</button>
+                    </div>
+
+                    <h2 class="text-3xl text-center text-yellow-300 mb-8 border-b border-gray-500 pb-4 tracking-wider">
+                        🎉 1인 1역 결과 🎉</h2>
+
+                    <!-- 긴장감 조성 애니메이션 영역 -->
+                    <div id="tension-container"
+                        class="absolute inset-0 flex flex-col items-center justify-center bg-black/80 z-10 rounded-xl">
+                        <div class="text-6xl mb-4 animate-bounce">🥁</div>
+                        <div class="text-4xl text-white font-bold shake-element text-center leading-relaxed">
+                            두구두구두구...<br>
+                            <span class="text-yellow-400 text-2xl mt-2 block">누가 어떤 역할을 맡게 될까요?</span>
+                        </div>
+                    </div>
+
+                    <!-- 결과 그리드 -->
+                    <div id="result-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <!-- 결과 카드 생성 -->
+                    </div>
+                </div>
+            </section>
+
+        </main>
+
+        <!-- 모달 (알림용) -->
+        <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+            <div class="bg-white p-6 rounded-xl shadow-xl text-center max-w-sm mx-4">
+                <p id="modal-msg" class="text-lg font-bold mb-4 text-gray-700">메시지</p>
+                <button onclick="closeModal()"
+                    class="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 font-bold">확인</button>
+            </div>
+        </div>
+
+        <script>
+            // --- 데이터 ---
+            const defaultRoles = [
+                "칠판 지우개", "우유 당번", "교실 환기", "불 끄기", "줄 세우기",
+                "선생님 돕기", "분리수거", "책장 정리", "복도 지킴이", "에너지 지킴이",
+                "급식 도우미", "화분 물주기", "준비물 챙기기", "청소 반장", "시간 알리미",
+                "발표 도우미", "준비 체조", "음악 틀기", "창문 닫기", "책상 줄 맞추기",
+                "게시판 정리", "컴퓨터 끄기", "커튼 치기", "우산 정리", "바른말 지킴이"
+            ];
+
+            const lastNames = ['김', '이', '박', '최', '정', '강', '조', '윤', '장', '임', '한', '오'];
+            const firstNames = ['민준', '서준', '도윤', '예준', '시우', '하준', '지호', '지후', '준우', '서연', '서윤', '지우', '서현', '하은', '지민', '민서', '지유', '윤서', '채원'];
+
+            let studentCount = 5;
+            let inputNames = [];
+            let inputRoles = [];
+            let previousAssignments = {}; // { 이름: 역할 } 저장 (이전 역할 회피용)
+
+            // --- 유틸리티 ---
+            function generateName() {
+                return lastNames[Math.floor(Math.random() * lastNames.length)] +
+                    firstNames[Math.floor(Math.random() * firstNames.length)];
+            }
+
+            function adjustCount(val) {
+                const el = document.getElementById('student-count');
+                let next = parseInt(el.value) + val;
+                if (next >= 2 && next <= 50) {
+                    el.value = next;
+                }
+            }
+
+            function showAlert(msg) {
+                document.getElementById('modal-msg').innerText = msg;
+                document.getElementById('modal').classList.remove('hidden');
+            }
+            function closeModal() {
+                document.getElementById('modal').classList.add('hidden');
+            }
+
+            function shuffle(array) {
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+                return array;
+            }
+
+            // --- STEP 1 -> STEP 2 ---
+            function goToStep2() {
+                studentCount = parseInt(document.getElementById('student-count').value);
+                if (!studentCount || studentCount < 2) {
+                    showAlert("학생 수는 최소 2명 이상이어야 해요!");
+                    return;
+                }
+
+                renderInputs();
+
+                document.getElementById('step-1').classList.add('hidden');
+                document.getElementById('step-2').classList.remove('hidden');
+            }
+
+            function renderInputs() {
+                const nameList = document.getElementById('name-list');
+                const roleList = document.getElementById('role-list');
+
+                nameList.innerHTML = '';
+                roleList.innerHTML = '';
+
+                // 1. 역할 목록 섞어서 준비
+                let shuffledRoles = [...defaultRoles];
+                shuffle(shuffledRoles);
+
+                // 부족하면 '특별 역할 N'으로 채움
+                while (shuffledRoles.length < studentCount) {
+                    shuffledRoles.push(`특별 역할 ${shuffledRoles.length + 1}`);
+                }
+
+                for (let i = 0; i < studentCount; i++) {
+                    // Name Input
+                    const nameWrapper = document.createElement('div');
+                    nameWrapper.className = 'flex items-center';
+                    nameWrapper.innerHTML = `
+                    <span class="w-8 text-gray-400 font-bold">${i + 1}.</span>
+                    <input type="text" id="name-${i}" value="${generateName()}" class="hand-written-input w-full text-gray-700" placeholder="이름">
+                `;
+                    nameList.appendChild(nameWrapper);
+
+                    // Role Input
+                    const roleWrapper = document.createElement('div');
+                    roleWrapper.className = 'flex items-center';
+                    roleWrapper.innerHTML = `
+                    <span class="w-8 text-gray-400 font-bold">${i + 1}.</span>
+                    <input type="text" id="role-${i}" value="${shuffledRoles[i]}" class="hand-written-input w-full text-blue-600" placeholder="역할">
+                `;
+                    roleList.appendChild(roleWrapper);
+                }
+            }
+
+            function regenerateDefaults() {
+                // 현재 입력된 값들을 다 지우고 새로 랜덤 생성
+                if (confirm("입력된 내용이 사라지고 새로 생성됩니다. 진행할까요?")) {
+                    renderInputs();
+                }
+            }
+
+            // --- STEP 2 -> STEP 3 (DRAW) ---
+            function startDraw() {
+                // 데이터 수집
+                inputNames = [];
+                inputRoles = [];
+
+                for (let i = 0; i < studentCount; i++) {
+                    const n = document.getElementById(`name-${i}`).value.trim();
+                    const r = document.getElementById(`role-${i}`).value.trim();
+
+                    if (!n || !r) {
+                        showAlert(`${i + 1}번의 이름이나 역할이 비어있어요!`);
+                        return;
+                    }
+                    inputNames.push(n);
+                    inputRoles.push(r);
+                }
+
+                document.getElementById('step-2').classList.add('hidden');
+                document.getElementById('step-3').classList.remove('hidden');
+
+                performDrawLogic();
+            }
+
+            function reDraw() {
+                document.getElementById('tension-container').classList.remove('hidden');
+                document.getElementById('result-grid').innerHTML = ''; // 초기화
+                performDrawLogic();
+            }
+
+            function performDrawLogic() {
+                // 긴장감 연출 (3초)
+                const tensionDiv = document.getElementById('tension-container');
+
+                // 실제 로직: 셔플
+                // "이전과 다른 역할" 로직:
+                // 1. 이름을 기준으로 섞을지, 역할을 기준으로 섞을지 결정 (보통 역할을 섞어서 이름에 매칭)
+                // 2. 만약 이전 데이터가 있다면, 최대한 겹치지 않게 재셔플 시도 (완전 회피는 불가능할 수도 있음)
+
+                let finalPairs = [];
+                let attempts = 0;
+                let success = false;
+
+                // 이름은 고정 순서로 두고, 역할을 섞어서 매칭한다고 가정
+                // 혹은 둘 다 섞어도 됨. 여기서는 이름 목록 순서대로 역할을 배정하는 UI로 보여줄 예정
+
+                let targetRoles = [...inputRoles];
+
+                while (attempts < 50 && !success) {
+                    shuffle(targetRoles);
+
+                    // 검사: 모든 학생에 대해 이전 역할과 같은지 확인
+                    let collision = false;
+                    // 이전 기록이 없으면 collision은 항상 false -> success
+                    if (Object.keys(previousAssignments).length > 0) {
+                        for (let i = 0; i < studentCount; i++) {
+                            const name = inputNames[i];
+                            const newRole = targetRoles[i];
+                            if (previousAssignments[name] === newRole) {
+                                collision = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (!collision) {
+                        success = true;
+                    }
+                    attempts++;
+                }
+
+                // 루프가 끝났는데 success가 false라면(운 나쁨 or 불가능), 그냥 마지막 셔플 상태 사용
+
+                // 결과 저장 (다음 번 회피를 위해)
+                previousAssignments = {};
+                for (let i = 0; i < studentCount; i++) {
+                    previousAssignments[inputNames[i]] = targetRoles[i];
+                }
+
+                // 3초 후 결과 공개
+                setTimeout(() => {
+                    tensionDiv.classList.add('hidden');
+                    displayResults(inputNames, targetRoles);
+                }, 3000);
+            }
+
+            function displayResults(names, roles) {
+                const grid = document.getElementById('result-grid');
+                grid.innerHTML = '';
+
+                for (let i = 0; i < studentCount; i++) {
+                    const card = document.createElement('div');
+                    // 포스트잇 느낌의 스타일
+                    const colors = ['bg-yellow-100', 'bg-blue-100', 'bg-green-100', 'bg-pink-100'];
+                    const colorClass = colors[i % colors.length];
+
+                    card.className = `${colorClass} text-gray-800 p-4 rounded shadow-md transform hover:scale-105 transition pop-in flex flex-col items-center justify-center min-h-[120px]`;
+                    card.style.animationDelay = `${i * 100}ms`; // 순차 등장
+
+                    // 핀 이미지 효과 (CSS)
+                    const pin = document.createElement('div');
+                    pin.className = 'w-3 h-3 rounded-full bg-red-500 absolute -top-1.5 shadow-sm border border-red-700';
+
+                    card.innerHTML = `
+                    <div class="w-full text-center border-b border-gray-300 pb-2 mb-2">
+                        <span class="text-sm text-gray-500 font-bold">학생</span><br>
+                        <span class="text-xl font-bold font-sans">${names[i]}</span>
+                    </div>
+                    <div class="text-3xl text-gray-400 mb-1">⬇</div>
+                    <div class="w-full text-center">
+                        <span class="text-sm text-gray-500 font-bold">역할</span><br>
+                        <span class="text-2xl font-black text-indigo-700 leading-tight">${roles[i]}</span>
+                    </div>
+                `;
+                    card.appendChild(pin);
+                    grid.appendChild(card);
+                }
+            }
+
+            function resetAll() {
+                if (confirm("처음 화면으로 돌아가시겠습니까? 모든 설정이 초기화됩니다.")) {
+                    location.reload();
+                }
+            }
+
+        </script>
+    </div>
+</body>
+
+</html>

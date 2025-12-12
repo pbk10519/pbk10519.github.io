@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>두근두근 상품 뽑기</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 효과음을 위한 Tone.js 라이브러리 로드 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
+    <link rel="stylesheet" href="../styles/style.css">
+    <style>
+        /* Page Specific Styles */
+
+
+
+        .gacha-card {
+            background-color: #f7f1e3;
+            /* 노트/카드 색상 */
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            border: 5px solid #ff7979;
+            /* 귀여운 테두리 */
+        }
+
+        /* 메인 버튼 스타일 */
+        .gacha-button {
+            position: relative;
+            background-color: #eb4d4b;
+            /* 레드 */
+            color: white;
+            border: 5px solid #c23616;
+            /* 딥 레드 테두리 */
+            border-radius: 9999px;
+            /* 원형 */
+            box-shadow: 0 10px 0 #c23616;
+            transition: all 0.1s ease;
+            cursor: pointer;
+            width: 200px;
+            height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            z-index: 10;
+        }
+
+        .gacha-button:hover {
+            background-color: #fa8231;
+            /* 오렌지 */
+        }
+
+        .gacha-button:active {
+            transform: translateY(10px);
+            box-shadow: 0 0 0 #c23616;
+        }
+
+        /* 버튼 주변의 캐릭터 장식 */
+        .deco-wrapper {
+            position: relative;
+            width: 200px;
+            height: 200px;
+        }
+
+        .deco-wrapper>div {
+            position: absolute;
+            font-size: 2rem;
+            animation: bounce-deco 4s infinite ease-in-out;
+        }
+
+        .deco-1 {
+            top: -20px;
+            left: -30px;
+            transform: rotate(-15deg);
+            animation-delay: 0s;
+        }
+
+        .deco-2 {
+            top: 180px;
+            left: -20px;
+            transform: rotate(10deg);
+            animation-delay: -1s;
+        }
+
+        .deco-3 {
+            top: -30px;
+            right: -40px;
+            transform: rotate(5deg);
+            animation-delay: -2s;
+        }
+
+        .deco-4 {
+            top: 170px;
+            right: -30px;
+            transform: rotate(-10deg);
+            animation-delay: -3s;
+        }
+
+        @keyframes bounce-deco {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        /* 결과 창 스타일 */
+        .result-box {
+            background-color: #fff;
+            border: 4px dashed #6ab04c;
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.5s;
+        }
+
+        /* 셔플 애니메이션 */
+        .shuffle {
+            animation: shuffle 0.05s infinite;
+        }
+
+        @keyframes shuffle {
+
+            0%,
+            100% {
+                transform: translateY(0) rotate(0);
+            }
+
+            50% {
+                transform: translateY(-2px) rotate(1deg);
+            }
+        }
+
+        /* 최종 결과 팝 애니메이션 */
+        .pop-result {
+            animation: popResult 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        @keyframes popResult {
+            0% {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+    </style>
+</head>
+
+<body class="flex flex-col items-center">
+
+    <!-- 내비게이션 메뉴 -->
+    <nav class="nav-container">
+        <ul class="nav-menu">
+            <li class="nav-item"><a href="../index.html" class="nav-link">🏠 홈</a></li>
+            <li class="nav-item"><a href="seatingarrangement.html" class="nav-link">자리배치</a></li>
+            <li class="nav-item"><a href="role.html" class="nav-link">1인 1역</a></li>
+            <li class="nav-item"><a href="candy.html" class="nav-link active">상품 뽑기</a></li>
+            <li class="nav-item"><a href="99.html" class="nav-link">구구단</a></li>
+            <li class="nav-item"><a href="alphabet.html" class="nav-link">알파벳</a></li>
+            <li class="nav-item"><a href="spelling.html" class="nav-link">맞춤법</a></li>
+        </ul>
+    </nav>
+
+    <div class="page-container">
+
+        <main class="w-full max-w-lg p-6 md:p-10 gacha-card text-center mx-auto">
+
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-800 mb-6 whitespace-nowrap">💖 두근두근 상품 뽑기 💖</h1>
+            <p class="text-gray-600 mb-8 whitespace-nowrap">버튼을 눌러 오늘의 행운 상품을 뽑아보세요!</p>
+
+            <!-- 상품 목록 표시 -->
+            <div class="mb-8 p-4 bg-yellow-100 rounded-lg border-2 border-yellow-500">
+                <h2 class="text-xl font-bold text-yellow-700 mb-2">🎁 오늘의 상품 목록</h2>
+                <ul id="prize-list" class="flex flex-wrap justify-center gap-x-4 gap-y-1 text-base text-gray-700">
+                    <!-- JS에서 채워짐 -->
+                </ul>
+            </div>
+
+            <!-- 뽑기 버튼 섹션 -->
+            <div class="flex justify-center mb-10">
+                <div class="deco-wrapper">
+                    <div class="deco-1">🌟</div>
+                    <div class="deco-2">🍭</div>
+                    <div class="deco-3">🎉</div>
+                    <div class="deco-4">🎁</div>
+
+                    <button id="draw-button" class="gacha-button" onclick="startDraw()">
+                        <span>뽑기 시작!</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 결과 창 -->
+            <div class="result-box rounded-xl p-4 transition-all duration-300">
+                <h3 class="text-xl text-gray-700 font-bold mb-2">당신의 상품은...</h3>
+                <div id="result-display" class="text-3xl font-black text-indigo-600">
+                    버튼을 눌러주세요!
+                </div>
+            </div>
+
+        </main>
+
+        <div id="init-warning"
+            class="fixed top-0 left-0 w-full h-full bg-black/70 flex items-center justify-center hidden z-50">
+            <div class="bg-white p-6 rounded-lg text-center shadow-lg">
+                <p class="text-xl font-bold mb-4">📢 터치하여 효과음 기능을 활성화하세요.</p>
+                <button onclick="initializeAudio()"
+                    class="bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600">시작하기</button>
+            </div>
+        </div>
+
+
+        <script>
+            // --- 데이터 설정 ---
+            const defaultPrizes = [
+                "초콜릿 🍫",
+                "하리보 🐻",
+                "랜덤 지우개 뽑기 ✏️",
+                "급식 1등 특권 ✨",
+                "청소 면제권 🥳",
+                "문화상품권 1,000원 💸",
+                "다음 번 뽑기 꽝 면제 ✅"
+            ];
+
+            let previousPrize = null;
+            let isDrawing = false;
+
+            // Tone.js를 위한 변수
+            let drawSynth;
+            let pingSynth;
+
+            // --- Tone.js 오디오 초기화 ---
+            // 브라우저 정책상 사용자 상호작용(클릭) 후에 오디오를 초기화해야 합니다.
+            document.addEventListener('DOMContentLoaded', () => {
+                document.getElementById('init-warning').classList.remove('hidden');
+            });
+
+            function initializeAudio() {
+                // 1. 긴장감 조성용 노이즈
+                drawSynth = new Tone.NoiseSynth({
+                    noise: {
+                        type: "pink"
+                    },
+                    envelope: {
+                        attack: 0.005,
+                        decay: 0.1,
+                        sustain: 0.2,
+                        release: 0.5
+                    }
+                }).toDestination();
+
+                // 2. 결과 발표용 톤
+                pingSynth = new Tone.Synth({
+                    oscillator: { type: "sine" },
+                    envelope: {
+                        attack: 0.01,
+                        decay: 0.2,
+                        sustain: 0.1,
+                        release: 0.5
+                    }
+                }).toDestination();
+
+                Tone.start();
+                document.getElementById('init-warning').classList.add('hidden');
+            }
+
+            // --- 유틸리티 함수 ---
+            function shuffle(array) {
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+                return array;
+            }
+
+            function displayPrizeList() {
+                const listEl = document.getElementById('prize-list');
+                listEl.innerHTML = defaultPrizes.map(prize => `<li><span class="text-red-500">★</span> ${prize}</li>`).join('');
+            }
+
+            // --- 메인 뽑기 로직 ---
+            function startDraw() {
+                if (isDrawing) return; // 이미 뽑기 중이라면 무시
+
+                isDrawing = true;
+                const drawButton = document.getElementById('draw-button');
+                const resultDisplay = document.getElementById('result-display');
+                const resultBox = document.querySelector('.result-box');
+
+                // 버튼 비활성화 및 스타일 변경
+                drawButton.disabled = true;
+                drawButton.classList.add('opacity-50');
+                resultBox.classList.remove('pop-result');
+                resultDisplay.classList.add('shuffle');
+
+                // 결과 초기화
+                resultDisplay.innerHTML = '두구두구...';
+
+                // --- 효과음 시작 (두근두근) ---
+                if (drawSynth) {
+                    // 노이즈와 함께 빠르게 핑 효과 반복
+                    drawSynth.triggerAttackRelease("4n", Tone.now());
+
+                    let drawCount = 0;
+                    const totalDraws = 20; // 셔플 횟수
+                    const interval = 150; // 셔플 속도 (0.15초마다)
+
+                    // 셔플 애니메이션 및 소리
+                    const drawInterval = setInterval(() => {
+                        if (drawCount >= totalDraws) {
+                            clearInterval(drawInterval);
+                            revealResult();
+                            return;
+                        }
+
+                        // 무작위로 상품을 빠르게 표시
+                        const randomPrize = defaultPrizes[Math.floor(Math.random() * defaultPrizes.length)];
+                        resultDisplay.innerHTML = `<span class="text-xl text-gray-700">${randomPrize}</span>`;
+
+                        // 짧은 소리 효과 반복
+                        drawSynth.triggerAttackRelease("16n", Tone.now());
+
+                        drawCount++;
+                    }, interval);
+                } else {
+                    // 오디오 초기화가 안된 경우 (혹시 모를 상황 대비)
+                    revealResult();
+                }
+            }
+
+            function revealResult() {
+                const drawButton = document.getElementById('draw-button');
+                const resultDisplay = document.getElementById('result-display');
+                const resultBox = document.querySelector('.result-box');
+
+                // 1. 결과 뽑기 (이전 상품과 겹치지 않게 시도)
+                let finalPrize = null;
+                let attempts = 0;
+                do {
+                    finalPrize = defaultPrizes[Math.floor(Math.random() * defaultPrizes.length)];
+                    attempts++;
+                } while (finalPrize === previousPrize && defaultPrizes.length > 1 && attempts < 10);
+
+                previousPrize = finalPrize;
+
+                // 2. 결과 표시 및 애니메이션 종료
+                resultDisplay.classList.remove('shuffle');
+                resultBox.classList.add('pop-result');
+
+                resultDisplay.innerHTML = `<span class="text-5xl">${finalPrize}</span>`;
+
+                // 3. 효과음 종료 및 승리 톤
+                if (pingSynth) {
+                    pingSynth.triggerAttackRelease("C5", "8n");
+                    pingSynth.triggerAttackRelease("G5", "8n", "+0.15");
+                    pingSynth.triggerAttackRelease("C6", "4n", "+0.3");
+                }
+
+                // 4. 버튼 활성화
+                setTimeout(() => {
+                    drawButton.disabled = false;
+                    drawButton.classList.remove('opacity-50');
+                    isDrawing = false;
+                }, 500); // 애니메이션 후 활성화
+            }
+
+            // 초기 로딩 시 상품 목록 표시
+            window.onload = displayPrizeList;
+        </script>
+    </div>
+</body>
+
+</html>

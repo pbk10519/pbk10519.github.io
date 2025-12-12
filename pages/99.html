@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>구구단 할리갈리</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../styles/style.css">
+    <style>
+        /* Inter 폰트 사용 (Local override removed to use Global Jua, or keep if game specific?) 
+           User said "Font unified with main". Main is Jua. So I will remove Inter font family.
+        */
+        /* Page Specific Styles */
+
+        .btn-card {
+            transition: all 0.1s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-card:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn-bell {
+            transition: all 0.1s ease;
+            animation: pulse-ring 2s infinite cubic-bezier(0.4, 0, 0.6, 1);
+        }
+
+        .btn-bell:active {
+            transform: scale(0.95);
+        }
+
+        /* 알림 메시지 스타일 */
+        #message-box {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.9);
+            opacity: 0;
+            transition: all 0.3s ease-in-out;
+            z-index: 50;
+        }
+
+        .message-show {
+            opacity: 1 !important;
+            transform: translate(-50%, -50%) scale(1) !important;
+        }
+
+        /* 턴 표시 애니메이션 */
+        .player-turn {
+            border: 4px solid #f97316;
+            /* Tailwind orange-600 */
+            box-shadow: 0 0 15px rgba(249, 115, 22, 0.8);
+            transform: scale(1.02);
+        }
+    </style>
+</head>
+
+<body class="flex flex-col items-center">
+
+    <!-- 내비게이션 메뉴 -->
+    <nav class="nav-container">
+        <ul class="nav-menu">
+            <li class="nav-item"><a href="../index.html" class="nav-link">🏠 홈</a></li>
+            <li class="nav-item"><a href="seatingarrangement.html" class="nav-link">자리배치</a></li>
+            <li class="nav-item"><a href="role.html" class="nav-link">1인 1역</a></li>
+            <li class="nav-item"><a href="candy.html" class="nav-link">상품 뽑기</a></li>
+            <li class="nav-item"><a href="99.html" class="nav-link active">구구단</a></li>
+            <li class="nav-item"><a href="alphabet.html" class="nav-link">알파벳</a></li>
+            <li class="nav-item"><a href="spelling.html" class="nav-link">맞춤법</a></li>
+        </ul>
+    </nav>
+
+    <div class="page-container">
+
+        <!-- 메인 컨테이너 -->
+        <div id="app-container" class="w-full max-w-4xl mx-auto bg-white p-8 rounded-2xl shadow-2xl">
+            <h1 class="text-3xl font-extrabold text-center mb-10 text-gray-800 whitespace-nowrap">🍎 구구단 할리갈리 🛎️</h1>
+
+            <!-- 1. 설정 화면 -->
+            <div id="setup-screen" class="space-y-6">
+                <div class="p-6 bg-yellow-50 rounded-xl">
+                    <p class="text-lg font-semibold text-gray-700 mb-4">플레이어 수 선택:</p>
+                    <div class="flex space-x-4">
+                        <button onclick="setPlayerCount(2)" id="btn-2-players"
+                            class="flex-1 py-3 px-6 text-xl font-bold bg-indigo-500 text-white rounded-xl hover:bg-indigo-600 transition duration-150 shadow-md">
+                            2명
+                        </button>
+                        <button onclick="setPlayerCount(3)" id="btn-3-players"
+                            class="flex-1 py-3 px-6 text-xl font-bold bg-indigo-500 text-white rounded-xl hover:bg-indigo-600 transition duration-150 shadow-md">
+                            3명
+                        </button>
+                    </div>
+                </div>
+
+                <div id="name-input-container" class="space-y-4 p-6 bg-white rounded-xl border border-gray-200 hidden">
+                    <p class="text-lg font-semibold text-gray-700">플레이어 이름 입력:</p>
+                    <div id="player-inputs" class="space-y-3">
+                        <!-- 이름 입력 필드가 여기에 동적으로 삽입됩니다. -->
+                    </div>
+                    <button onclick="startGame()" id="start-game-btn"
+                        class="w-full py-3 text-xl font-bold bg-green-500 text-white rounded-xl hover:bg-green-600 transition duration-150 shadow-lg mt-6">
+                        게임 시작!
+                    </button>
+                </div>
+            </div>
+
+            <!-- 2. 게임 화면 (처음에는 숨김) -->
+            <div id="game-screen" class="hidden">
+
+                <!-- 게임 상태 요약 (종류별 과일 합계) -->
+                <div class="text-center mb-8 p-4 bg-gray-50 rounded-xl shadow-inner">
+                    <p class="text-xl font-bold text-gray-700">테이블 위 과일 종류별 합계:</p>
+                    <div id="fruit-counts-display"
+                        class="flex justify-center space-x-6 my-2 text-2xl font-extrabold text-red-600">
+                        <!-- Dynamic fruit counts will go here -->
+                    </div>
+                    <p class="text-sm text-gray-500 mt-2">같은 종류의 과일이 <span class="font-bold text-red-600">5개</span>가 되면
+                        종을 칠 수 있습니다!</p>
+                    <p id="turn-indicator" class="mt-4 text-lg font-bold text-indigo-600"></p>
+                </div>
+
+                <!-- 플레이어 카드 및 버튼 -->
+                <div id="player-game-board" class="grid gap-6"
+                    style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));">
+                    <!-- 플레이어 컴포넌트가 여기에 동적으로 삽입됩니다. -->
+                </div>
+
+                <!-- 리셋/종료 버튼 -->
+                <div class="mt-10 flex justify-center space-x-4">
+                    <button onclick="resetGame()"
+                        class="py-3 px-6 bg-red-500 text-white font-bold rounded-xl hover:bg-red-600 transition shadow-md">
+                        게임 초기화
+                    </button>
+                </div>
+            </div>
+
+            <!-- 메시지/모달 박스 (구구단 문제 등) -->
+            <div id="message-box" class="message-show hidden">
+                <div class="bg-white p-8 rounded-2xl shadow-2xl border-4 border-indigo-500 w-96 text-center space-y-4">
+                    <div id="message-content">
+                        <p class="text-2xl font-extrabold text-gray-800" id="message-title"></p>
+                        <p class="text-xl text-gray-600" id="message-body"></p>
+                    </div>
+                    <input type="number" id="answer-input"
+                        class="w-full p-3 border-2 border-indigo-300 rounded-lg text-center text-2xl font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500 hidden"
+                        placeholder="정답 입력">
+                    <button id="message-ok-btn"
+                        class="w-full py-3 bg-indigo-500 text-white font-bold rounded-xl hover:bg-indigo-600 transition shadow-md"
+                        onclick="handleMessageOk()">확인</button>
+                </div>
+            </div>
+
+            <!-- 배경 오버레이 -->
+            <div id="overlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden" onclick="closeMessage()"></div>
+
+        </div>
+
+        <script>
+            // 전역 변수
+            let playerCount = 0;
+            let players = [];
+            let currentPlayerIndex = 0;
+            let currentProblem = null;
+            let ringingPlayerIndex = -1;
+
+            const FRUITS = ["🍎", "🍌", "🍇", "🍓", "🍉"];
+
+            // 새로운 변수: 테이블 위 과일 종류별 총 개수
+            let tableFruitCounts = {};
+
+            function initializeTableFruitCounts() {
+                tableFruitCounts = {};
+                FRUITS.forEach(fruit => {
+                    tableFruitCounts[fruit] = 0;
+                });
+            }
+            // 초기화 함수 호출
+            initializeTableFruitCounts();
+
+            // Firebase-like custom alert function
+            function showMessage(title, body, isQuestion = false, callback = null) {
+                const box = document.getElementById('message-box');
+                const overlay = document.getElementById('overlay');
+                const titleEl = document.getElementById('message-title');
+                const bodyEl = document.getElementById('message-body');
+                const answerInput = document.getElementById('answer-input');
+                const okBtn = document.getElementById('message-ok-btn');
+
+                titleEl.textContent = title;
+                bodyEl.textContent = body;
+                box.classList.remove('hidden');
+                overlay.classList.remove('hidden');
+
+                if (isQuestion) {
+                    answerInput.value = '';
+                    answerInput.classList.remove('hidden');
+                    okBtn.textContent = '제출';
+                    // Enter 키로 제출 가능하게 설정
+                    answerInput.onkeydown = (event) => {
+                        if (event.key === 'Enter') {
+                            handleMessageOk();
+                        }
+                    };
+                } else {
+                    answerInput.classList.add('hidden');
+                    okBtn.textContent = '확인';
+                    answerInput.onkeydown = null;
+                }
+
+                // 콜백 함수 저장
+                window.messageCallback = callback;
+
+                // 애니메이션 적용
+                setTimeout(() => box.classList.add('message-show'), 10);
+            }
+
+            function closeMessage() {
+                const box = document.getElementById('message-box');
+                const overlay = document.getElementById('overlay');
+                box.classList.remove('message-show');
+                setTimeout(() => {
+                    box.classList.add('hidden');
+                    overlay.classList.add('hidden');
+                }, 300); // 애니메이션 시간과 일치
+                document.getElementById('answer-input').onkeydown = null;
+            }
+
+            function handleMessageOk() {
+                const answerInput = document.getElementById('answer-input');
+                const answer = answerInput.value;
+                closeMessage();
+
+                if (window.messageCallback) {
+                    if (answerInput.classList.contains('hidden')) {
+                        // 일반 확인 버튼 클릭
+                        window.messageCallback(true);
+                    } else {
+                        // 문제 제출 버튼 클릭
+                        window.messageCallback(answer);
+                    }
+                }
+            }
+
+            // 1. 설정 화면 로직
+            function setPlayerCount(count) {
+                playerCount = count;
+                document.getElementById('btn-2-players').classList.remove('bg-indigo-700');
+                document.getElementById('btn-3-players').classList.remove('bg-indigo-700');
+                document.getElementById('btn-' + count + '-players').classList.add('bg-indigo-700');
+
+                const inputContainer = document.getElementById('player-inputs');
+                inputContainer.innerHTML = '';
+                for (let i = 0; i < count; i++) {
+                    inputContainer.innerHTML += `
+                    <input type="text" id="player-name-${i}" placeholder="플레이어 ${i + 1} 이름" value="플레이어 ${i + 1}"
+                           class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                `;
+                }
+                document.getElementById('name-input-container').classList.remove('hidden');
+            }
+
+            function startGame() {
+                if (playerCount === 0) {
+                    showMessage("오류", "먼저 플레이어 수를 선택해 주세요.", false);
+                    return;
+                }
+
+                players = [];
+                // allNamesValid 플래그는 이름이 비어있지 않은지 검사하는 용도였으나, 기본값으로 대체하므로 항상 true
+                let allNamesValid = true;
+
+                for (let i = 0; i < playerCount; i++) {
+                    const nameInput = document.getElementById(`player-name-${i}`);
+                    let name = nameInput.value.trim();
+                    if (name === "") {
+                        name = `플레이어 ${i + 1}`; // 이름이 없으면 기본 이름 사용
+                    }
+                    // 플레이어 카드 초기 상태: 0개, 첫 번째 과일로 초기화
+                    players.push({ name: name, score: 0, currentFruitCount: 0, lastFruitEmoji: FRUITS[0] });
+                }
+
+                if (!allNamesValid) {
+                    // 이 부분은 이름 기본값 설정으로 인해 사실상 실행되지 않음
+                    showMessage("오류", "모든 플레이어의 이름을 입력해 주세요.", false);
+                    return;
+                }
+
+                // 화면 전환
+                document.getElementById('setup-screen').classList.add('hidden');
+                document.getElementById('game-screen').classList.remove('hidden');
+
+                // 테이블 과일 카운트 초기화
+                initializeTableFruitCounts();
+
+                renderGameBoard();
+                updateGameDisplay();
+            }
+
+            // 2. 게임 화면 로직
+
+            function renderGameBoard() {
+                const board = document.getElementById('player-game-board');
+                board.innerHTML = '';
+                board.style.gridTemplateColumns = `repeat(auto-fit, minmax(280px, 1fr))`;
+
+                players.forEach((player, index) => {
+                    const playerDiv = document.createElement('div');
+                    playerDiv.id = `player-card-${index}`;
+                    playerDiv.className = `player-card bg-white p-6 rounded-2xl shadow-xl space-y-4 transition duration-300 ease-in-out border-4 border-transparent`;
+                    playerDiv.innerHTML = `
+                    <div class="flex justify-between items-center border-b pb-3 mb-3">
+                        <h2 class="text-2xl font-bold text-gray-900">${player.name}</h2>
+                        <span id="score-${index}" class="text-3xl font-extrabold text-indigo-600">${player.score}점</span>
+                    </div>
+
+                    <!-- 카드 디스플레이 -->
+                    <div id="card-display-${index}" class="flex justify-center items-center h-32 bg-gray-200 rounded-xl text-5xl font-extrabold transition duration-300">
+                        ❓
+                    </div>
+
+                    <!-- 버튼 액션 -->
+                    <div class="flex space-x-2">
+                        <button onclick="flipCard(${index})" id="flip-btn-${index}" class="btn-card flex-1 py-3 bg-blue-500 text-white font-bold rounded-xl hover:bg-blue-600">
+                            카드 뒤집기
+                        </button>
+                        <button onclick="ringBell(${index})" class="btn-bell w-1/3 py-3 bg-yellow-400 text-gray-900 font-bold rounded-xl hover:bg-yellow-500">
+                            🛎️ 종 치기
+                        </button>
+                    </div>
+                `;
+                    board.appendChild(playerDiv);
+                });
+            }
+
+            function updateGameDisplay() {
+                // 1. 플레이어별 점수 및 카드 업데이트
+                players.forEach((player, index) => {
+                    document.getElementById(`score-${index}`).textContent = `${player.score}점`;
+                    const cardDisplay = document.getElementById(`card-display-${index}`);
+                    cardDisplay.innerHTML = player.currentFruitCount === 0
+                        ? '❓'
+                        : `<span class="text-7xl">${player.lastFruitEmoji}</span><span class="text-4xl ml-2 font-bold">x${player.currentFruitCount}</span>`;
+                });
+
+                // 2. 과일 종류별 합계 업데이트
+                const fruitCountsDisplay = document.getElementById('fruit-counts-display');
+                fruitCountsDisplay.innerHTML = '';
+
+                FRUITS.forEach(fruit => {
+                    const count = tableFruitCounts[fruit] || 0;
+                    // 5개일 경우 눈에 띄게 표시
+                    fruitCountsDisplay.innerHTML += `
+                    <div class="flex flex-col items-center">
+                        <span class="text-4xl">${fruit}</span>
+                        <span class="text-3xl ${count === 5 ? 'text-green-600 font-extrabold transform scale-110' : 'text-gray-800'}">${count}</span>
+                    </div>
+                `;
+                });
+
+                // 3. 턴 표시 업데이트
+                const turnIndicator = document.getElementById('turn-indicator');
+                const turnPlayer = players[currentPlayerIndex];
+                turnIndicator.textContent = `현재 턴: ${turnPlayer.name}님이 카드를 뒤집을 차례입니다.`;
+
+                // 4. 카드 배경 하이라이트 (턴 표시)
+                players.forEach((player, index) => {
+                    const playerCard = document.getElementById(`player-card-${index}`);
+                    playerCard.classList.remove('player-turn');
+                    if (index === currentPlayerIndex) {
+                        playerCard.classList.add('player-turn');
+                    }
+                });
+            }
+
+            function flipCard(playerIndex) {
+                if (playerIndex !== currentPlayerIndex) {
+                    showMessage("잠깐!", `${players[playerIndex].name}님, 지금은 ${players[currentPlayerIndex].name}님의 차례입니다.`, false);
+                    return;
+                }
+
+                const player = players[playerIndex];
+
+                // 1. 이전 카드 값 제거: 테이블 총 합계에서 이전 과일 수를 뺌
+                const oldFruit = player.lastFruitEmoji;
+                const oldCount = player.currentFruitCount;
+                if (oldCount > 0 && tableFruitCounts[oldFruit] !== undefined) {
+                    tableFruitCounts[oldFruit] -= oldCount;
+                }
+
+                // 2. 새로운 카드 정보 생성 (1~5개)
+                const newCount = Math.floor(Math.random() * 5) + 1;
+                const fruitEmoji = FRUITS[Math.floor(Math.random() * FRUITS.length)];
+
+                // 3. 플레이어 상태 업데이트 (새 값 저장)
+                player.currentFruitCount = newCount;
+                player.lastFruitEmoji = fruitEmoji;
+
+                // 4. 새로운 카드 값 추가: 테이블 총 합계에 새 과일 수를 더함
+                if (tableFruitCounts[fruitEmoji] !== undefined) {
+                    tableFruitCounts[fruitEmoji] += newCount;
+                }
+
+
+                // 5. 다음 턴으로 넘기기
+                currentPlayerIndex = (currentPlayerIndex + 1) % playerCount;
+
+                // 6. 화면 업데이트
+                updateGameDisplay();
+            }
+
+            function ringBell(playerIndex) {
+                ringingPlayerIndex = playerIndex; // 종을 친 사람 저장
+
+                // 5개가 있는지 확인: tableFruitCounts의 값 중 5가 있는지 확인
+                const isFiveFruit = Object.values(tableFruitCounts).some(count => count === 5);
+
+                if (isFiveFruit) {
+                    // 종 치기 성공! 구구단 문제 출제
+                    generateMultiplicationProblem();
+                } else {
+                    // 종 치기 실패!
+                    handleFalseRing();
+                }
+            }
+
+            function generateMultiplicationProblem() {
+                // 2단부터 9단까지, 곱하는 수는 1부터 9까지
+                const num1 = Math.floor(Math.random() * 8) + 2; // 2 ~ 9
+                const num2 = Math.floor(Math.random() * 9) + 1; // 1 ~ 9
+                const correctAnswer = num1 * num2;
+
+                currentProblem = { num1, num2, correctAnswer };
+
+                showMessage(
+                    `${players[ringingPlayerIndex].name}님, 구구단 문제!`,
+                    `${num1} X ${num2} = ?`,
+                    true, // 질문 모드 활성화
+                    handleMultiplicationAnswer // 콜백 함수
+                );
+            }
+
+            function handleMultiplicationAnswer(answer) {
+                const parsedAnswer = parseInt(answer);
+                const player = players[ringingPlayerIndex];
+
+                if (isNaN(parsedAnswer)) {
+                    showMessage("오류", "숫자를 입력해 주세요! 문제를 틀렸습니다.", false, () => resetTable(false, player.name));
+                } else if (parsedAnswer === currentProblem.correctAnswer) {
+                    // 정답!
+                    player.score++;
+                    // 득점 즉시 UI에 반영
+                    updateGameDisplay();
+                    showMessage("🎉 정답!", `${currentProblem.num1} X ${currentProblem.num2} = ${currentProblem.correctAnswer} (정답입니다!)`, false, () => resetTable(true, player.name));
+                } else {
+                    // 오답!
+                    showMessage("❌ 오답!", `${currentProblem.num1} X ${currentProblem.num2} = ${currentProblem.correctAnswer} (정답은 ${currentProblem.correctAnswer}입니다.)`, false, () => resetTable(false, player.name));
+                }
+
+                ringingPlayerIndex = -1; // 리셋
+            }
+
+            function handleFalseRing() {
+                const player = players[ringingPlayerIndex];
+
+                // 현재 과일 종류별 합계를 보여줌
+                let currentCounts = FRUITS.map(f => `${f}: ${tableFruitCounts[f]}`).join(', ');
+
+                showMessage("🚨 오종!", `테이블 위 과일 중 5개인 종류가 없습니다. (현재 합계: ${currentCounts})`, false, () => resetTable(false, player.name));
+
+                ringingPlayerIndex = -1; // 리셋
+            }
+
+            function resetTable(isCorrect, playerName) {
+                // 테이블의 모든 카드 리셋 (점수 획득/실패와 관계없이 초기화)
+                players.forEach(player => {
+                    player.currentFruitCount = 0;
+                });
+
+                // 테이블 위 과일 종류별 총 개수를 0으로 리셋
+                initializeTableFruitCounts();
+
+                // 누가 다음 턴을 시작할지 결정
+                if (isCorrect) {
+                    // 득점자가 다음 턴을 시작하도록 currentPlayerIndex를 갱신
+                    currentPlayerIndex = players.findIndex(p => p.name === playerName);
+                } else {
+                    // 실패 시: 종 친 사람의 다음 사람이 시작
+                    currentPlayerIndex = (players.findIndex(p => p.name === playerName) + 1) % playerCount;
+                }
+
+                updateGameDisplay();
+            }
+
+            function resetGame() {
+                const confirmReset = () => {
+                    playerCount = 0;
+                    players = [];
+                    // tableFruitCounts도 초기화
+                    initializeTableFruitCounts();
+                    currentPlayerIndex = 0;
+                    currentProblem = null;
+                    ringingPlayerIndex = -1;
+
+                    document.getElementById('setup-screen').classList.remove('hidden');
+                    document.getElementById('game-screen').classList.add('hidden');
+                    document.getElementById('name-input-container').classList.add('hidden');
+                    document.getElementById('player-inputs').innerHTML = '';
+                    document.getElementById('player-game-board').innerHTML = '';
+
+                    // 버튼 스타일 초기화
+                    document.getElementById('btn-2-players').classList.remove('bg-indigo-700');
+                    document.getElementById('btn-3-players').classList.remove('bg-indigo-700');
+                };
+
+                showMessage("게임 초기화", "정말로 게임을 처음부터 다시 시작하시겠습니까?", false, confirmReset);
+            }
+
+            // 초기 화면 설정 (2명 기본 선택)
+            window.onload = () => {
+                setPlayerCount(2);
+            };
+        </script>
+    </div>
+</body>
+
+</html>
